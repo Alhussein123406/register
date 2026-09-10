@@ -1,96 +1,269 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة الطلاب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة بيانات الطلاب</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .form-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        .buttons { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; flex: 1; font-size: 14px; transition: 0.3s; }
-        .btn-add { background-color: #28a745; }
-        .btn-add:hover { background-color: #218838; }
-        .btn-edit { background-color: #ffc107; color: #000; }
-        .btn-edit:hover { background-color: #e0a800; }
-        .btn-delete { background-color: #dc3545; }
-        .btn-delete:hover { background-color: #c82333; }
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 550px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.3s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-add { background-color: var(--success-color); }
+        .btn-update { background-color: var(--warning-color); }
+        .btn-delete { background-color: var(--danger-color); }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #response-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .success { background-color: #d1fae5; color: #065f46; }
+        .error { background-color: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>نظام إدارة الطلاب</h2>
+
+<div class="container">
+    <h2>إدارة بيانات الطلاب</h2>
+    <form id="studentForm">
+        
+        <!-- رقم الهوية (مفتاح البحث وجلب البيانات) -->
         <div class="form-group">
-            <label for="studentId">رقم الطالب (ID):</label>
-            <input type="text" id="studentId" placeholder="مطلوب في التعديل والحذف">
+            <label for="nationalId">رقم الهوية:</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="nationalId" name="nationalId" required placeholder="أدخل رقم الهوية للبحث أو الإضافة">
+                <button type="button" id="btnFetch" style="flex: 0 0 100px; background-color: var(--primary-color);">بحث</button>
+            </div>
         </div>
+
+        <!-- اسم الطالب -->
         <div class="form-group">
             <label for="studentName">اسم الطالب:</label>
-            <input type="text" id="studentName" placeholder="أدخل اسم الطالب">
+            <input type="text" id="studentName" name="studentName" required placeholder="أدخل اسم الطالب الكامل">
         </div>
+
+        <!-- القسم (بنين أم بنات) -->
         <div class="form-group">
-            <label for="studentStage">المرحلة الدراسية:</label>
-            <select id="studentStage">
-                <option value="primary">المرحلة الابتدائية</option>
-                <option value="middle">المرحلة المتوسطة</option>
-                <option value="high">المرحلة الثانوية</option>
+            <label for="genderSection">القسم:</label>
+            <select id="genderSection" name="genderSection" required>
+                <option value="">اختر القسم</option>
+                <option value="بنين">بنين</option>
+                <option value="بنات">بنات</option>
             </select>
         </div>
-        <div class="buttons">
-            <button class="btn-add" onclick="sendData('add')">إضافة</button>
-            <button class="btn-edit" onclick="sendData('edit')">تعديل</button>
-            <button class="btn-delete" onclick="sendData('delete')">حذف</button>
+
+        <!-- المرحلة الدراسية -->
+        <div class="form-group">
+            <label for="academicStage">المرحلة الدراسية:</label>
+            <select id="academicStage" name="academicStage" required>
+                <option value="">اختر المرحلة</option>
+                <option value="الابتدائية">الابتدائية</option>
+                <option value="المتوسطة">المتوسطة</option>
+                <option value="الثانوية">الثانوية</option>
+            </select>
         </div>
-    </div>
 
-    <script>
-        // استبدل هذا الرابط برابط Webhook الخاص بك من n8n
-        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/8d82a71f-2994-4a8f-976f-e2c9a05bac7f';
+        <!-- أزرار العمليات المطلوبة -->
+        <div class="btn-group">
+            <button type="button" class="btn-add" onclick="sendData('ADD')">إضافة طالب</button>
+            <button type="button" class="btn-update" onclick="sendData('UPDATE')">تعديل بيانات</button>
+            <button type="button" class="btn-delete" onclick="sendData('DELETE')">حذف طالب</button>
+        </div>
+    </form>
 
-        async function sendData(action) {
-            const id = document.getElementById('studentId').value;
-            const name = document.getElementById('studentName').value;
-            const stage = document.getElementById('studentStage').value;
+    <div id="response-message"></div>
+</div>
 
-            // التحقق من وجود الـ ID في حالتي التعديل والحذف
-            if ((action === 'edit' || action === 'delete') && !id) {
-                alert('يرجى إدخال رقم الطالب (ID) لإتمام هذه العملية.');
-                return;
-            }
+<script>
+    // روابط الـ Webhook المخصصة لكل من GET و POST
+    const WEBHOOK_GET_URL = 'http://localhost:5678/webhook-test/2dbf7f81-f2bf-4dcd-8c34-ad4f6bc012dc';
+    const WEBHOOK_POST_URL = 'http://localhost:5678/webhook-test/2dbf7f81-f2bf-4dcd-8c34-ad4f6bc012dc';
 
-            // تجهيز البيانات لإرسالها
-            const payload = {
-                action: action, // 'add' | 'edit' | 'delete'
-                id: id,
-                name: name,
-                stage: stage // 'primary' | 'middle' | 'high'
-            };
-
-            try {
-                // إرسال البيانات إلى n8n
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    alert('تم إرسال الطلب بنجاح!');
-                    // تفريغ الحقول بعد الإرسال
-                    document.getElementById('studentId').value = '';
-                    document.getElementById('studentName').value = '';
-                } else {
-                    alert('حدث خطأ أثناء الاتصال بالخادم.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('فشل الاتصال. تأكد من عمل سيرفر n8n.');
-            }
+    // دالة جلب البيانات عند إدخال رقم الهوية والضغط على زر بحث (GET)
+    document.getElementById('btnFetch').addEventListener('click', async () => {
+        const nationalId = document.getElementById('nationalId').value.trim();
+        if (!nationalId) {
+            showMsg('الرجاء إدخال رقم الهوية للبحث أولاً', 'error');
+            return;
         }
-    </script>
+
+        try {
+            const response = await fetch(`${WEBHOOK_GET_URL}?nationalId=${nationalId}&action=FETCH`, {
+                method: 'GET'
+            });
+
+            if (!response.ok) throw new Error('فشل الاتصال بالخادم');
+
+            const result = await response.json();
+            
+            if (result && result.found) {
+                document.getElementById('studentName').value = result.studentName || '';
+                document.getElementById('genderSection').value = result.genderSection || '';
+                document.getElementById('academicStage').value = result.academicStage || '';
+                showMsg('تم جلب بيانات الطالب بنجاح', 'success');
+            } else {
+                showMsg('لم يتم العثور على طالب بهذا الرقم', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            showMsg('حدث خطأ أثناء جلب البيانات', 'error');
+        }
+    });
+
+    // دالة إرسال طلبات الإضافة، التعديل، والحذف إلى n8n Webhook (POST)
+    async function sendData(actionType) {
+        const nationalId = document.getElementById('nationalId').value.trim();
+        const studentName = document.getElementById('studentName').value.trim();
+        const genderSection = document.getElementById('genderSection').value;
+        const academicStage = document.getElementById('academicStage').value;
+
+        if (!nationalId) {
+            showMsg('رقم الهوية حقل إجباري', 'error');
+            return;
+        }
+
+        if ((actionType === 'ADD' || actionType === 'UPDATE') && (!studentName || !genderSection || !academicStage)) {
+            showMsg('الرجاء تعبئة جميع الحقول المطلوبة', 'error');
+            return;
+        }
+
+        const payload = {
+            action: actionType, // 'ADD', 'UPDATE', 'DELETE'
+            data: {
+                nationalId,
+                studentName,
+                genderSection,
+                academicStage
+            }
+        };
+
+        try {
+            const response = await fetch(WEBHOOK_POST_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showMsg(result.message || 'تمت العملية بنجاح!', 'success');
+                if (actionType === 'ADD' || actionType === 'DELETE') {
+                    document.getElementById('studentForm').reset();
+                }
+            } else {
+                showMsg(result.message || 'حدث خطأ أثناء تنفيذ الطلب', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            showMsg('تعذر الاتصال بـ Webhook الخاص بـ n8n', 'error');
+        }
+    }
+
+    function showMsg(text, type) {
+        const msgDiv = document.getElementById('response-message');
+        msgDiv.textContent = text;
+        msgDiv.className = type;
+        msgDiv.style.display = 'block';
+        setTimeout(() => {
+            msgDiv.style.display = 'none';
+        }, 4000);
+    }
+</script>
+
 </body>
 </html>
