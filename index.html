@@ -171,36 +171,86 @@
     const WEBHOOK_GET_URL = 'http://localhost:5678/webhook-test/2dbf7f81-f2bf-4dcd-8c34-ad4f6bc012dc';
     const WEBHOOK_POST_URL = 'http://localhost:5678/webhook-test/2dbf7f81-f2bf-4dcd-8c34-ad4f6bc012dc';
 
-    // دالة جلب البيانات عند إدخال رقم الهوية والضغط على زر بحث (GET)
-    document.getElementById('btnFetch').addEventListener('click', async () => {
-        const nationalId = document.getElementById('nationalId').value.trim();
-        if (!nationalId) {
-            showMsg('الرجاء إدخال رقم الهوية للبحث أولاً', 'error');
-            return;
+    // 2. البحث (GET)
+async function searchStudent(type) {
+    const data = getFormData();
+    const url = new URL(N8N_WEBHOOK_URL);
+    
+    if (type === 'id') {
+        if(!data.nationalId) return showMessage("أدخل رقم الهوية للبحث", false);
+        url.searchParams.append('action', 'searchID');
+        url.searchParams.append('nationalId', data.nationalId);
+    } else {
+        if(!data.studentName) return showMessage("أدخل اسم الطالب للبحث", false);
+        url.searchParams.append('action', 'searchName');
+        url.searchParams.append('studentName', data.studentName);
+    }
+
+    try {
+        const response = await fetch(url.toString(), { method: 'GET' });
+        let result = await response.json(); 
+        
+        // --- التعديل الجديد: التحقق مما إذا كانت النتيجة مصفوفة (Array) ---
+        if (Array.isArray(result) && result.length > 0) {
+            result = result[0]; // أخذ أول نتيجة فقط
         }
+        // -----------------------------------------------------------------
 
-        try {
-            const response = await fetch(`${WEBHOOK_GET_URL}?nationalId=${nationalId}&action=FETCH`, {
-                method: 'GET'
-            });
-
-            if (!response.ok) throw new Error('فشل الاتصال بالخادم');
-
-            const result = await response.json();
+        if(result && result.studentName) {
+            document.getElementById('studentName').value = result.studentName;
+            document.getElementById('nationalId').value = result.nationalId;
+            document.getElementById('section').value = result.section;
+            document.getElementById('stage').value = result.stage;
             
-            if (result && result.found) {
-                document.getElementById('studentName').value = result.studentName || '';
-                document.getElementById('genderSection').value = result.genderSection || '';
-                document.getElementById('academicStage').value = result.academicStage || '';
-                showMsg('تم جلب بيانات الطالب بنجاح', 'success');
-            } else {
-                showMsg('لم يتم العثور على طالب بهذا الرقم', 'error');
-            }
-        } catch (error) {
-            console.error(error);
-            showMsg('حدث خطأ أثناء جلب البيانات', 'error');
+            stageSelect.dispatchEvent(new Event('change'));
+            document.getElementById('grade').value = result.grade;
+            document.getElementById('classNumber').value = result.classNumber || '1';
+            document.getElementById('track').value = result.track || 'عام';
+
+            updateFullClassName();
+            showMessage("تم العثور على بيانات الطالب", true);
+            toggleActionButtons(true);
+        } else {
+            showMessage("لم يتم العثور على الطالب", false);
+            toggleActionButtons(false);
         }
-    });
+    } catch (error) {
+        console.error(error);
+        showMessage("حدث خطأ أثناء البحث، تأكد من إعدادات n8n", false);
+    }
+}
+    
+    
+    // دالة جلب البيانات عند إدخال رقم الهوية والضغط على زر بحث (GET)
+    // document.getElementById('btnFetch').addEventListener('click', async () => {
+    //     const nationalId = document.getElementById('nationalId').value.trim();
+    //     if (!nationalId) {
+    //         showMsg('الرجاء إدخال رقم الهوية للبحث أولاً', 'error');
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await fetch(`${WEBHOOK_GET_URL}?nationalId=${nationalId}&action=FETCH`, {
+    //             method: 'GET'
+    //         });
+
+    //         if (!response.ok) throw new Error('فشل الاتصال بالخادم');
+
+    //         const result = await response.json();
+            
+    //         if (result && result.found) {
+    //             document.getElementById('studentName').value = result.studentName || '';
+    //             document.getElementById('genderSection').value = result.genderSection || '';
+    //             document.getElementById('academicStage').value = result.academicStage || '';
+    //             showMsg('تم جلب بيانات الطالب بنجاح', 'success');
+    //         } else {
+    //             showMsg('لم يتم العثور على طالب بهذا الرقم', 'error');
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //         showMsg('حدث خطأ أثناء جلب البيانات', 'error');
+    //     }
+    // });
 
     // دالة إرسال طلبات الإضافة، التعديل، والحذف إلى n8n Webhook (POST)
     async function sendData(actionType) {
